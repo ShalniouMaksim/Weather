@@ -5,29 +5,45 @@ import './index.css';
 import * as serviceWorker from './serviceWorker';
 import styled from 'styled-components'} */
 
+const {
+  REACT_APP_APIKEYSHTORM: apiKey,
+  REACT_APP_URLCORDINATES: urlCordinates,
+  REACT_APP_PROXYURL: proxyUrl,
+  REACT_APP_URLDARK: urlDark,
+  REACT_APP_APIKEYDARK: apiKeyDark,
+  REACT_APP_URLSHTORM: urlStorm,
+} = process.env;
+process.env.CI = false;
+const darksky = 'darksky';
+let buttonCheck = true;
 class WeatherApi extends React.Component {
-  clickHandlers = {};
-
   constructor(props) {
     super(props);
     this.state = {
       temperature: '',
-      api: 'darksky',
+      api: darksky,
       inputValue: '',
       lat: '',
       lng: '',
       windSpeed: '',
       summary: '',
-      buttonCheck: true,
-      className: 'buttonClick',
+      weatherState: {},
     };
   }
 
   componentDidMount() {
     Object.keys(localStorage).forEach((value) => {
-      this.clickHandlers[value] = JSON.parse(localStorage.getItem(value));
+      this.setState((state) => ({
+        weatherState: {
+          ...state.weatherState,
+          [value]: {
+            ...JSON.parse(localStorage.getItem(value)),
+          },
+        },
+      }));
     });
-    console.log(this.clickHandlers);
+    console.log(localStorage);
+    console.log(this.state);
     navigator.geolocation.getCurrentPosition(
       this.successHandler,
       this.errorHandler,
@@ -36,12 +52,16 @@ class WeatherApi extends React.Component {
 
   getClickHandler(key) {
     const { api } = this.state;
-    if (Object.prototype.hasOwnProperty.call(this.clickHandlers, key)) {
+    const {
+      weatherState: { [key]: cachedWeather },
+    } = this.state;
+    const { weatherState: stateWeather } = this.state;
+    if (Object.prototype.hasOwnProperty.call(stateWeather, key)) {
       const dateNow = new Date();
-      const dateTime = new Date(this.clickHandlers[key].dateTime);
+      const dateTime = new Date(cachedWeather.dateTime);
       dateTime.setMilliseconds(2 * 60 * 60 * 1000);
       if (dateTime.getTime() > dateNow.getTime()) {
-        return this.clickHandlers[key];
+        return cachedWeather;
       }
       if (api === 'darksky') {
         this.getWeatherFromDarkSky();
@@ -49,15 +69,13 @@ class WeatherApi extends React.Component {
     } else if (api === 'darksky') {
       this.getWeatherFromDarkSky();
     } else this.getWeatherFromStormglass();
-    return this.clickHandlers[key];
+    return cachedWeather;
   }
 
   getCordinatesByCityName = async () => {
     const { inputValue } = this.state;
     let json;
-    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-    const url = `https://geocode.xyz/${inputValue}?json=1`;
-    const response = await fetch(proxyUrl + url);
+    const response = await fetch(`${proxyUrl}${urlCordinates}${inputValue}?json=1`);
     if (response.ok) {
       json = await response.json();
     } else {
@@ -65,6 +83,8 @@ class WeatherApi extends React.Component {
     }
     this.setState({ lat: json.latt });
     this.setState({ lng: json.longt });
+    console.log(json);
+    if (json.error) alert('Вы точно ввели коректный город ?');
   };
 
   successHandler = (position) => {
@@ -93,9 +113,8 @@ class WeatherApi extends React.Component {
   };
 
   checkInputCityValue = async (event) => {
+    buttonCheck = false;
     const { inputValue } = this.state;
-    this.setState({ buttonCheck: false });
-    this.setState({ className: 'buttonDisabled' });
     event.preventDefault();
     if (inputValue === '') {
       navigator.geolocation.getCurrentPosition(
@@ -105,19 +124,21 @@ class WeatherApi extends React.Component {
     } else {
       await this.getCordinatesByCityName();
     }
+    buttonCheck = true;
     if (await this.getClickHandler(inputValue)) {
+      const {
+        weatherState: { [inputValue]: cachedWeather },
+      } = this.state;
       this.setState({
-        temperature: this.clickHandlers[inputValue].temperature,
+        temperature: cachedWeather.temperature,
       });
       this.setState({
-        summary: this.clickHandlers[inputValue].summary,
+        summary: cachedWeather.summary,
       });
       this.setState({
-        windSpeed: this.clickHandlers[inputValue].windSpeed,
+        windSpeed: cachedWeather.windSpeed,
       });
     }
-    this.setState({ buttonCheck: true });
-    this.setState({ className: 'buttonClick' });
   };
 
   checkSelect = async (event) => {
@@ -126,49 +147,41 @@ class WeatherApi extends React.Component {
   };
 
   getWeatherFromDarkSky = async () => {
-    const {
-      inputValue,
-      lat,
-      lng,
-    } = this.state;
-    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-    const url = `https://api.darksky.net/forecast/41978216b30014d67f247239f930b083/${lat},${lng}?units=si`;
-    const response = await fetch(proxyUrl + url);
+    const { inputValue, lat, lng } = this.state;
+    const response = await fetch(`${proxyUrl}${urlDark}${apiKeyDark}${lat},${lng}?units=si`);
     const answer = await response.json();
     this.setState({ summary: answer.currently.summary });
     this.setState({ windSpeed: Math.round(answer.currently.windSpeed) });
     this.setState({ temperature: Math.round(answer.currently.temperature) });
     console.log(answer);
     const now = new Date();
-    this.clickHandlers[inputValue] = {
-      temperature: Math.round(answer.currently.temperature),
-      windSpeed: Math.round(answer.currently.windSpeed),
-      summary: answer.currently.summary,
-      dateTime: now,
-    };
-    console.log(inputValue, this.clickHandlers[inputValue]);
-    localStorage.setItem(
-      inputValue,
-      JSON.stringify(this.clickHandlers[inputValue]),
-    );
+    this.setState((state) => ({
+      weatherState: {
+        ...state.weatherState,
+        [inputValue]: {
+          temperature: Math.round(answer.currently.temperature),
+          windSpeed: Math.round(answer.currently.windSpeed),
+          summary: answer.currently.summary,
+          dateTime: now,
+        },
+      },
+    }));
+    const {
+      weatherState: { [inputValue]: cachedWeather },
+    } = this.state;
+    console.log(this.state);
+    localStorage.setItem(inputValue, JSON.stringify(cachedWeather));
   };
 
   getWeatherFromStormglass = async () => {
     const {
-      inputValue,
-      summary,
-      lat,
-      lng,
+      inputValue, summary, lat, lng,
     } = this.state;
     const date = new Date();
     const a = date.toISOString();
-
-    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-    const url = `https://api.stormglass.io/v1/weather/point?lat=${lat}&lng=${lng}&start=${a}&end=${a}`;
-    const response = await fetch(proxyUrl + url, {
+    const response = await fetch(`${proxyUrl}${urlStorm}lat=${lat}&lng=${lng}&start=${a}&end=${a}`, {
       headers: {
-        Authorization:
-          'e61f042a-5251-11ea-ac48-0242ac130007-e61f04f2-5251-11ea-ac48-0242ac130007',
+        Authorization: apiKey,
       },
     });
     const json = await response.json();
@@ -206,26 +219,26 @@ class WeatherApi extends React.Component {
     });
     console.log(json);
     const now = new Date();
-    this.clickHandlers[inputValue] = {
-      temperature: Math.round(json.hours[0].airTemperature[0].value),
-      windSpeed: Math.round(json.hours[0].windSpeed[0].value),
-      summary,
-      dateTime: now,
-    };
-    localStorage.setItem(
-      inputValue,
-      JSON.stringify(this.clickHandlers[inputValue]),
-    );
+
+    this.setState((state) => ({
+      weatherState: {
+        ...state.weatherState,
+        [inputValue]: {
+          temperature: Math.round(json.hours[0].airTemperature[0].value),
+          windSpeed: Math.round(json.hours[0].windSpeed[0].value),
+          summary,
+          dateTime: now,
+        },
+      },
+    }));
+    const {
+      weatherState: { [inputValue]: cachedWeather },
+    } = this.state;
+    localStorage.setItem(inputValue, JSON.stringify(cachedWeather));
   };
 
   render() {
-    const {
-      temperature,
-      windSpeed,
-      summary,
-      buttonCheck,
-      className,
-    } = this.state;
+    const { temperature, windSpeed, summary } = this.state;
     return (
       <div className="roditel">
         <header>Welcome</header>
@@ -243,7 +256,9 @@ class WeatherApi extends React.Component {
               <div>
                 <button
                   type="button"
-                  className={className}
+                  className={
+                    buttonCheck === false ? 'buttonDisabled' : 'buttonClick'
+                  }
                   onClick={this.checkInputCityValue}
                   disabled={!buttonCheck}
                 >
