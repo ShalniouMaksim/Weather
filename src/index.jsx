@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import './index.css';
 /* {import App from './App';
 import * as serviceWorker from './serviceWorker';
-import styled from 'styled-components'} */
+import styled from 'styled-components';} */
 
 const {
   REACT_APP_APIKEYSHTORM: apiKey,
@@ -14,14 +14,14 @@ const {
   REACT_APP_URLSHTORM: urlStorm,
 } = process.env;
 process.env.CI = false;
-const darksky = 'darksky';
+const DARKSKY = 'darksky';
 let buttonCheck = true;
 class WeatherApi extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       temperature: '',
-      api: darksky,
+      api: DARKSKY,
       inputValue: '',
       lat: '',
       lng: '',
@@ -63,10 +63,10 @@ class WeatherApi extends React.Component {
       if (dateTime.getTime() > dateNow.getTime()) {
         return cachedWeather;
       }
-      if (api === 'darksky') {
+      if (api === DARKSKY) {
         this.getWeatherFromDarkSky();
       } else this.getWeatherFromStormglass();
-    } else if (api === 'darksky') {
+    } else if (api === DARKSKY) {
       this.getWeatherFromDarkSky();
     } else this.getWeatherFromStormglass();
     return cachedWeather;
@@ -84,14 +84,14 @@ class WeatherApi extends React.Component {
     this.setState({ lat: json.latt });
     this.setState({ lng: json.longt });
     console.log(json);
-    if (json.error) alert('Вы точно ввели коректный город ?');
+    if (json.error) alert('Вы точно ввели корректный город ?');
   };
 
   successHandler = (position) => {
     const { api } = this.state;
     this.setState({ lat: position.coords.latitude });
     this.setState({ lng: position.coords.longitude });
-    if (api === 'darksky') {
+    if (api === DARKSKY) {
       this.getWeatherFromDarkSky();
     } else this.getWeatherFromStormglass();
   };
@@ -257,7 +257,7 @@ class WeatherApi extends React.Component {
                 <button
                   type="button"
                   className={
-                    buttonCheck === false ? 'buttonDisabled' : 'buttonClick'
+                    buttonCheck ? 'buttonClick' : 'buttonDisabled'
                   }
                   onClick={this.checkInputCityValue}
                   disabled={!buttonCheck}
