@@ -8,7 +8,7 @@ import {
 } from './constants';
 import { GlobalStyle } from './globalstyles';
 
-const StyleSelect = styled.select`
+const Select = styled.select`
   text-align-last: center;
   text-align: center;
   color: black;
@@ -18,19 +18,15 @@ const StyleSelect = styled.select`
   appearance: button;
   width: 253px;
 `;
-const P = styled.p`
-  color: white;
-  font-size: 150%;
-`;
-const StyleDiv = styled.div`
+const BorderItem = styled.div`
   border: 3px solid #fff;
   border-radius: 5%;
 `;
-const ContainerDiv = styled.div`
+const LayoutItem = styled.div`
   display: flex;
   justify-content: center;
 `;
-const ParentDiv = styled.div`
+const Container = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -81,7 +77,7 @@ const ButtonKeyframes = keyframes`
   }
 `;
 
-const ButtonClick = styled.button`
+const Button = styled.button`
 color: black;
   background: white; 
   outline: none;
@@ -94,7 +90,7 @@ color: black;
   `}
 `;
 
-const InputCity = styled.input`
+const Input = styled.input`
   text-align: center;
   margin-top: 5%;
   width: 250px;
@@ -326,49 +322,49 @@ class WeatherApi extends React.Component {
       temperature, windSpeed, summary, loading,
     } = this.state;
     return (
-      <ParentDiv>
+      <Container>
         <GlobalStyle />
         <Header>Welcome</Header>
-        <ContainerDiv>
-          <StyleDiv>
+        <LayoutItem>
+          <BorderItem>
             <div>
               <div>
-                <InputCity
+                <Input
                   placeholder="Input city"
                   type="text"
                   onChange={this.checkInputValue}
                 />
               </div>
               <div>
-                <ButtonClick
+                <Button
                   active={loading}
                   type="button"
                   onClick={this.checkInputCityValue}
                   disabled={loading}
                 >
                   Weather
-                </ButtonClick>
+                </Button>
               </div>
-              <StyleSelect onChange={this.checkSelect}>
+              <Select onChange={this.checkSelect}>
                 <option value="darksky">api.darsky.net</option>
                 <option value="stormglass">api.stormglass.io</option>
-              </StyleSelect>
+              </Select>
             </div>
             <div>
-              <P>
+              <p>
 temperature :
                 {temperature}
-              </P>
-              <P>
+              </p>
+              <p>
 Wind Speed :
                 {windSpeed}
-              </P>
-              <P>{summary}</P>
+              </p>
+              <p>{summary}</p>
             </div>
-          </StyleDiv>
-        </ContainerDiv>
+          </BorderItem>
+        </LayoutItem>
         <Footer>27.02.2020</Footer>
-      </ParentDiv>
+      </Container>
     );
   }
 }

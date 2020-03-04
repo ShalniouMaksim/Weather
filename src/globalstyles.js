@@ -18,5 +18,9 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+p{
+    color: white;
+    font-size: 150%;
+}
   `;
 export default GlobalStyle;
