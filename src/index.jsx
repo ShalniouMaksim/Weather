@@ -1,21 +1,105 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import './index.css';
 /* {import App from './App';
-import * as serviceWorker from './serviceWorker';
-import styled from 'styled-components';} */
+import * as serviceWorker from './serviceWorker';} */
+import styled, { keyframes } from 'styled-components';
+import {
+  apiKey, urlCordinates, proxyUrl, urlDark, apiKeyDark, urlStorm, DARKSKY,
+} from './constants';
+import { GlobalStyle } from './globalstyles';
 
-const {
-  REACT_APP_APIKEYSHTORM: apiKey,
-  REACT_APP_URLCORDINATES: urlCordinates,
-  REACT_APP_PROXYURL: proxyUrl,
-  REACT_APP_URLDARK: urlDark,
-  REACT_APP_APIKEYDARK: apiKeyDark,
-  REACT_APP_URLSHTORM: urlStorm,
-} = process.env;
-process.env.CI = false;
-const DARKSKY = 'darksky';
-let buttonCheck = true;
+const StyleSelect = styled.select`
+  text-align-last: center;
+  text-align: center;
+  color: black;
+  border: none;
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+  -webkit-appearance: button;
+  appearance: button;
+  width: 253px;
+`;
+const P = styled.p`
+  color: white;
+  font-size: 150%;
+`;
+const StyleDiv = styled.div`
+  border: 3px solid #fff;
+  border-radius: 5%;
+`;
+const ContainerDiv = styled.div`
+  display: flex;
+  justify-content: center;
+`;
+const ParentDiv = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100vh;
+`;
+const Header = styled.header`
+  background-color: rgba(21, 0, 155, 0.75);
+  color: white;
+  padding: 10px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+const Footer = styled.footer`
+  background-color: rgba(21, 0, 155, 0.75);
+  color: white;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+`;
+const ButtonKeyframes = keyframes`
+  0% {
+    background-color: red;
+    left: 0px;
+    top: 0px;
+  }
+  25% {
+    background-color: yellow;
+    left: 200px;
+    top: 0px;
+  }
+  50% {
+    background-color: blue;
+    left: 200px;
+    top: 200px;
+  }
+  75% {
+    background-color: green;
+    left: 0px;
+    top: 200px;
+  }
+  100% {
+    background-color: red;
+    left: 0px;
+    top: 0px;
+  }
+`;
+
+const ButtonClick = styled.button`
+color: black;
+  background: white; 
+  outline: none;
+  width: 253px;
+  animation:${ButtonKeyframes} 10s linear infinite;
+  ${({ active }) => active && `
+  color: black;
+  background: black;
+  animation: unset;
+  `}
+`;
+
+const InputCity = styled.input`
+  text-align: center;
+  margin-top: 5%;
+  width: 250px;
+`;
+
 class WeatherApi extends React.Component {
   constructor(props) {
     super(props);
@@ -27,6 +111,7 @@ class WeatherApi extends React.Component {
       lng: '',
       windSpeed: '',
       summary: '',
+      loading: false,
       weatherState: {},
     };
   }
@@ -96,7 +181,6 @@ class WeatherApi extends React.Component {
     } else this.getWeatherFromStormglass();
   };
 
-  // Error Handler
   errorHandler = (positionError) => {
     if (positionError.code === positionError.PERMISSION_DENIED) {
       alert('Error: Permission Denied!');
@@ -113,7 +197,7 @@ class WeatherApi extends React.Component {
   };
 
   checkInputCityValue = async (event) => {
-    buttonCheck = false;
+    this.setState({ loading: true });
     const { inputValue } = this.state;
     event.preventDefault();
     if (inputValue === '') {
@@ -124,7 +208,7 @@ class WeatherApi extends React.Component {
     } else {
       await this.getCordinatesByCityName();
     }
-    buttonCheck = true;
+    this.setState({ loading: false });
     if (await this.getClickHandler(inputValue)) {
       const {
         weatherState: { [inputValue]: cachedWeather },
@@ -238,53 +322,53 @@ class WeatherApi extends React.Component {
   };
 
   render() {
-    const { temperature, windSpeed, summary } = this.state;
+    const {
+      temperature, windSpeed, summary, loading,
+    } = this.state;
     return (
-      <div className="roditel">
-        <header>Welcome</header>
-        <div className="container">
-          <div className="divStyle">
+      <ParentDiv>
+        <GlobalStyle />
+        <Header>Welcome</Header>
+        <ContainerDiv>
+          <StyleDiv>
             <div>
               <div>
-                <input
-                  className="inputClass"
+                <InputCity
                   placeholder="Input city"
                   type="text"
                   onChange={this.checkInputValue}
                 />
               </div>
               <div>
-                <button
+                <ButtonClick
+                  active={loading}
                   type="button"
-                  className={
-                    buttonCheck ? 'buttonClick' : 'buttonDisabled'
-                  }
                   onClick={this.checkInputCityValue}
-                  disabled={!buttonCheck}
+                  disabled={loading}
                 >
                   Weather
-                </button>
+                </ButtonClick>
               </div>
-              <select className="selectClass" onChange={this.checkSelect}>
+              <StyleSelect onChange={this.checkSelect}>
                 <option value="darksky">api.darsky.net</option>
                 <option value="stormglass">api.stormglass.io</option>
-              </select>
+              </StyleSelect>
             </div>
             <div>
-              <p className="pClass">
+              <P>
 temperature :
                 {temperature}
-              </p>
-              <p className="pClass">
+              </P>
+              <P>
 Wind Speed :
                 {windSpeed}
-              </p>
-              <p className="pClass">{summary}</p>
+              </P>
+              <P>{summary}</P>
             </div>
-          </div>
-        </div>
-        <footer>27.02.2020</footer>
-      </div>
+          </StyleDiv>
+        </ContainerDiv>
+        <Footer>27.02.2020</Footer>
+      </ParentDiv>
     );
   }
 }
