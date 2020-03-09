@@ -1,130 +1,52 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { connect } from 'react-redux';
+import { createStore } from 'redux';
+import reducer from './redusers';
 /* {import App from './App';
 import * as serviceWorker from './serviceWorker';} */
-import styled, { keyframes } from 'styled-components';
 import {
-  apiKey, urlCordinates, proxyUrl, urlDark, apiKeyDark, urlStorm, DARKSKY,
+  apiKey,
+  urlCordinates,
+  proxyUrl,
+  urlDark,
+  apiKeyDark,
+  urlStorm,
+  DARKSKY,
 } from './constants';
+import {
+  weatherLoadingSuccess,
+  weatherLoadingFailure,
+  weatherLoadingStarted,
+  geocoderLoadingSuccess,
+  geocoderLoadingFailure,
+  geocoderLoadingStarted,
+  setCurrentApi,
+  setCity,
+  setСachedData,
+} from './actions';
+import {
+  Select,
+  BorderItem,
+  LayoutItem,
+  Container,
+  Header,
+  Footer,
+  Button,
+  Input,
+} from './styled';
 import { GlobalStyle } from './globalstyles';
 
-const Select = styled.select`
-  text-align-last: center;
-  text-align: center;
-  color: black;
-  border: none;
-  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
-  -webkit-appearance: button;
-  appearance: button;
-  width: 253px;
-`;
-const BorderItem = styled.div`
-  border: 3px solid #fff;
-  border-radius: 5%;
-`;
-const LayoutItem = styled.div`
-  display: flex;
-  justify-content: center;
-`;
-const Container = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  height: 100vh;
-`;
-const Header = styled.header`
-  background-color: rgba(21, 0, 155, 0.75);
-  color: white;
-  padding: 10px;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-const Footer = styled.footer`
-  background-color: rgba(21, 0, 155, 0.75);
-  color: white;
-  padding: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-`;
-const ButtonKeyframes = keyframes`
-  0% {
-    background-color: red;
-    left: 0px;
-    top: 0px;
-  }
-  25% {
-    background-color: yellow;
-    left: 200px;
-    top: 0px;
-  }
-  50% {
-    background-color: blue;
-    left: 200px;
-    top: 200px;
-  }
-  75% {
-    background-color: green;
-    left: 0px;
-    top: 200px;
-  }
-  100% {
-    background-color: red;
-    left: 0px;
-    top: 0px;
-  }
-`;
-
-const Button = styled.button`
-color: black;
-  background: white; 
-  outline: none;
-  width: 253px;
-  animation:${ButtonKeyframes} 10s linear infinite;
-  ${({ active }) => active && `
-  color: black;
-  background: black;
-  animation: unset;
-  `}
-`;
-
-const Input = styled.input`
-  text-align: center;
-  margin-top: 5%;
-  width: 250px;
-`;
-
+const store = createStore(reducer);
 class WeatherApi extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      temperature: '',
-      api: DARKSKY,
-      inputValue: '',
-      lat: '',
-      lng: '',
-      windSpeed: '',
-      summary: '',
-      loading: false,
-      weatherState: {},
-    };
-  }
-
   componentDidMount() {
+    store.dispatch(setCurrentApi('darksky'));
     Object.keys(localStorage).forEach((value) => {
-      this.setState((state) => ({
-        weatherState: {
-          ...state.weatherState,
-          [value]: {
-            ...JSON.parse(localStorage.getItem(value)),
-          },
-        },
+      store.dispatch(setСachedData(value, {
+        ...JSON.parse(localStorage.getItem(value)),
       }));
     });
     console.log(localStorage);
-    console.log(this.state);
     navigator.geolocation.getCurrentPosition(
       this.successHandler,
       this.errorHandler,
@@ -132,11 +54,11 @@ class WeatherApi extends React.Component {
   }
 
   getClickHandler(key) {
-    const { api } = this.state;
+    const { api } = store.getState();
     const {
       weatherState: { [key]: cachedWeather },
-    } = this.state;
-    const { weatherState: stateWeather } = this.state;
+    } = store.getState();
+    const { weatherState: stateWeather } = store.getState();
     if (Object.prototype.hasOwnProperty.call(stateWeather, key)) {
       const dateNow = new Date();
       const dateTime = new Date(cachedWeather.dateTime);
@@ -154,24 +76,32 @@ class WeatherApi extends React.Component {
   }
 
   getCordinatesByCityName = async () => {
-    const { inputValue } = this.state;
+    store.dispatch(geocoderLoadingStarted());
+    const { city } = store.getState();
     let json;
-    const response = await fetch(`${proxyUrl}${urlCordinates}${inputValue}?json=1`);
+    const response = await fetch(
+      `${proxyUrl}${urlCordinates}${city}?json=1`,
+    );
     if (response.ok) {
       json = await response.json();
+      store.dispatch(geocoderLoadingSuccess({
+        lat: json.latt,
+        lng: json.longt,
+      }));
+      console.log(json);
+      if (json.error) alert('Вы точно ввели корректный город ?');
     } else {
-      alert(`Ошибка HTTP: ${response.status}`);
+      store.dispatch(geocoderLoadingFailure());
     }
-    this.setState({ lat: json.latt });
-    this.setState({ lng: json.longt });
-    console.log(json);
-    if (json.error) alert('Вы точно ввели корректный город ?');
   };
 
   successHandler = (position) => {
-    const { api } = this.state;
-    this.setState({ lat: position.coords.latitude });
-    this.setState({ lng: position.coords.longitude });
+    store.dispatch(geocoderLoadingStarted());
+    const { api } = store.getState();
+    store.dispatch(geocoderLoadingSuccess({
+      lat: position.coords.latitude,
+      lng: position.coords.longitude,
+    }));
     if (api === DARKSKY) {
       this.getWeatherFromDarkSky();
     } else this.getWeatherFromStormglass();
@@ -179,24 +109,23 @@ class WeatherApi extends React.Component {
 
   errorHandler = (positionError) => {
     if (positionError.code === positionError.PERMISSION_DENIED) {
-      alert('Error: Permission Denied!');
+      store.dispatch(geocoderLoadingFailure());
     } else if (positionError.code === positionError.POSITION_UNAVAILABLE) {
-      alert('Error: Position Unavailable!');
+      store.dispatch(geocoderLoadingFailure());
     } else if (positionError.code === positionError.TIMEOUT) {
-      alert('Error: Timeout!');
+      store.dispatch(geocoderLoadingFailure());
     }
   };
 
   checkInputValue = (event) => {
     event.preventDefault();
-    this.setState({ inputValue: event.target.value });
+    store.dispatch(setCity(event.target.value));
   };
 
   checkInputCityValue = async (event) => {
-    this.setState({ loading: true });
-    const { inputValue } = this.state;
+    const { city } = store.getState();
     event.preventDefault();
-    if (inputValue === '') {
+    if (city === '') {
       navigator.geolocation.getCurrentPosition(
         this.successHandler,
         this.errorHandler,
@@ -204,123 +133,133 @@ class WeatherApi extends React.Component {
     } else {
       await this.getCordinatesByCityName();
     }
-    this.setState({ loading: false });
-    if (await this.getClickHandler(inputValue)) {
+    if (await this.getClickHandler(city)) {
       const {
-        weatherState: { [inputValue]: cachedWeather },
-      } = this.state;
-      this.setState({
+        weatherState: { [city]: cachedWeather },
+      } = store.getState();
+      store.dispatch(weatherLoadingSuccess({
         temperature: cachedWeather.temperature,
-      });
-      this.setState({
         summary: cachedWeather.summary,
-      });
-      this.setState({
         windSpeed: cachedWeather.windSpeed,
-      });
+      }));
+      this.setState(store.getState());
     }
+    console.log(store.getState());
   };
 
   checkSelect = async (event) => {
     event.preventDefault();
-    this.setState({ api: event.target.value });
+    store.dispatch(setCurrentApi(event.target.value));
   };
 
   getWeatherFromDarkSky = async () => {
-    const { inputValue, lat, lng } = this.state;
-    const response = await fetch(`${proxyUrl}${urlDark}${apiKeyDark}${lat},${lng}?units=si`);
-    const answer = await response.json();
-    this.setState({ summary: answer.currently.summary });
-    this.setState({ windSpeed: Math.round(answer.currently.windSpeed) });
-    this.setState({ temperature: Math.round(answer.currently.temperature) });
-    console.log(answer);
-    const now = new Date();
-    this.setState((state) => ({
-      weatherState: {
-        ...state.weatherState,
-        [inputValue]: {
+    store.dispatch(weatherLoadingStarted());
+    const { city, lat, lng } = store.getState();
+    let response;
+    try {
+      response = await fetch(
+        `${proxyUrl}${urlDark}${apiKeyDark}${lat},${lng}?units=si`,
+      );
+      if (response.ok) {
+        const answer = await response.json();
+        store.dispatch(weatherLoadingSuccess({
+          summary: answer.currently.summary,
+          windSpeed: Math.round(answer.currently.windSpeed),
+          temperature: Math.round(answer.currently.temperature),
+        }));
+        console.log(answer);
+        store.dispatch(setСachedData(city, {
           temperature: Math.round(answer.currently.temperature),
           windSpeed: Math.round(answer.currently.windSpeed),
           summary: answer.currently.summary,
-          dateTime: now,
-        },
-      },
-    }));
-    const {
-      weatherState: { [inputValue]: cachedWeather },
-    } = this.state;
-    console.log(this.state);
-    localStorage.setItem(inputValue, JSON.stringify(cachedWeather));
+          dateTime: new Date(),
+        }));
+        const {
+          weatherState: { [city]: cachedWeather },
+        } = store.getState();
+        console.log(store.getState());
+        localStorage.setItem(city, JSON.stringify(cachedWeather));
+        console.log(localStorage);
+        this.setState({});
+      } else throw new Error(response.statusText);
+    } catch (err) {
+      store.dispatch(weatherLoadingFailure());
+    }
   };
 
   getWeatherFromStormglass = async () => {
+    store.dispatch(weatherLoadingStarted());
     const {
-      inputValue, summary, lat, lng,
-    } = this.state;
+      city, summary, lat, lng,
+    } = store.getState();
     const date = new Date();
     const a = date.toISOString();
-    const response = await fetch(`${proxyUrl}${urlStorm}lat=${lat}&lng=${lng}&start=${a}&end=${a}`, {
-      headers: {
-        Authorization: apiKey,
-      },
-    });
-    const json = await response.json();
-    if (
-      json.hours[0].precipitation[0].value > 1.1
-      && json.hours[0].airTemperature[0].value > 0
-    ) {
-      this.setState({ summary: 'Heavy rain' });
-    } else if (
-      json.hours[0].precipitation[0].value > 0
-      && json.hours[0].precipitation[0].value <= 1.1
-      && json.hours[0].airTemperature[0].value > 0
-    ) {
-      this.setState({ summary: 'Light Rain' });
-    } else if (
-      json.hours[0].precipitation[0].value > 0.8
-      && json.hours[0].airTemperature[0].value < 0
-    ) {
-      this.setState({ summary: 'Heavy snow' });
-    } else if (
-      json.hours[0].precipitation[0].value > 0
-      && json.hours[0].precipitation[0].value <= 0.8
-      && json.hours[0].airTemperature[0].value < 0
-    ) {
-      this.setState({ summary: 'Light snow' });
-    } else if (json.hours[0].cloudCover[0].value > 80) {
-      this.setState({ summary: 'cloudy' });
-    } else {
-      this.setState({ summary: 'Clear' });
-    }
-
-    this.setState({ windSpeed: Math.round(json.hours[0].windSpeed[0].value) });
-    this.setState({
-      temperature: Math.round(json.hours[0].airTemperature[0].value),
-    });
-    console.log(json);
-    const now = new Date();
-
-    this.setState((state) => ({
-      weatherState: {
-        ...state.weatherState,
-        [inputValue]: {
+    let response;
+    try {
+      response = await fetch(
+        `${proxyUrl}${urlStorm}lat=${lat}&lng=${lng}&start=${a}&end=${a}`,
+        {
+          headers: {
+            Authorization: apiKey,
+          },
+        },
+      );
+      if (response.ok) {
+        const json = await response.json();
+        let summarryLet;
+        if (
+          json.hours[0].precipitation[0].value > 1.1
+          && json.hours[0].airTemperature[0].value > 0
+        ) {
+          summarryLet = 'Heavy rain';
+        } else if (
+          json.hours[0].precipitation[0].value > 0
+          && json.hours[0].precipitation[0].value <= 1.1
+          && json.hours[0].airTemperature[0].value > 0
+        ) {
+          summarryLet = 'Light Rain';
+        } else if (
+          json.hours[0].precipitation[0].value > 0.8
+          && json.hours[0].airTemperature[0].value < 0
+        ) {
+          summarryLet = 'Heavy snow';
+        } else if (
+          json.hours[0].precipitation[0].value > 0
+          && json.hours[0].precipitation[0].value <= 0.8
+          && json.hours[0].airTemperature[0].value < 0
+        ) {
+          summarryLet = 'Light snow';
+        } else if (json.hours[0].cloudCover[0].value > 80) {
+          summarryLet = 'cloudy';
+        } else {
+          summarryLet = 'Clear';
+        }
+        store.dispatch(weatherLoadingSuccess({
+          summary: summarryLet,
+          windSpeed: Math.round(json.hours[0].windSpeed[0].value),
+          temperature: Math.round(json.hours[0].airTemperature[0].value),
+        }));
+        store.dispatch(setСachedData(city, {
           temperature: Math.round(json.hours[0].airTemperature[0].value),
           windSpeed: Math.round(json.hours[0].windSpeed[0].value),
           summary,
-          dateTime: now,
-        },
-      },
-    }));
-    const {
-      weatherState: { [inputValue]: cachedWeather },
-    } = this.state;
-    localStorage.setItem(inputValue, JSON.stringify(cachedWeather));
+          dateTime: new Date(),
+        }));
+        const {
+          weatherState: { [city]: cachedWeather },
+        } = store.getState();
+        localStorage.setItem(city, JSON.stringify(cachedWeather));
+      } else throw new Error(response.statusText);
+    } catch (err) {
+      store.dispatch(weatherLoadingFailure());
+    }
   };
 
   render() {
+    console.log(store.getState());
     const {
       temperature, windSpeed, summary, loading,
-    } = this.state;
+    } = store.getState();
     return (
       <Container>
         <GlobalStyle />
@@ -368,4 +307,5 @@ Wind Speed :
     );
   }
 }
-ReactDOM.render(<WeatherApi />, document.getElementById('root'));
+ReactDOM.render(<WeatherApi store={store} />, document.getElementById('root'));
+export default connect()(WeatherApi);
