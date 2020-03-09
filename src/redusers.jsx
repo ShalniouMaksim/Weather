@@ -51,7 +51,7 @@ export default function reducer(state = {}, action) {
         loading: false,
         weatherState: {
           ...state.weatherState,
-          [action.city]: {
+          [action.payload.city]: {
             temperature: action.payload.temperature,
             windSpeed: action.payload.windSpeed,
             summary: action.payload.summary,

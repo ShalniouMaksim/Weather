@@ -1,55 +1,101 @@
-export function weatherLoadingSuccess({ temperature, windSpeed, summary }) {
+function weatherLoadingSuccess({ temperature, windSpeed, summary }) {
   return {
     type: 'WEATHER_LOADING_SUCCESS',
     payload: { temperature, windSpeed, summary },
   };
 }
-export function weatherLoadingFailure() {
+
+function weatherLoadingFailure() {
   return {
     type: 'WEATHER_LOADING_FAILURE',
   };
 }
-export function weatherLoadingStarted() {
+
+function weatherLoadingStarted() {
   return {
     type: 'WEATHER_LOADING_STARTED',
   };
 }
-export function geocoderLoadingSuccess({ lng, lat }) {
+
+function geocoderLoadingSuccess({ lng, lat }) {
   return {
     type: 'GEOCODER_LOADING_SUCCESS',
     payload: { lng, lat },
   };
 }
-export function geocoderLoadingFailure() {
+
+function geocoderLoadingFailure() {
   return {
     type: 'GEOCODER_LOADING_FAILURE',
   };
 }
-export function geocoderLoadingStarted() {
+
+function geocoderLoadingStarted() {
   return {
     type: 'GEOCODER_LOADING_STARTED',
   };
 }
-export function setCurrentApi(api) {
+
+function setCurrentApi(api) {
   return {
     type: 'SET_CURRENT_API',
     api,
   };
 }
-export function setCity(city) {
+
+function setCity(city) {
   return {
     type: 'SET_CITY',
     city,
   };
 }
-export function setСachedData(city, {
+
+function setСachedData(city, {
   temperature, windSpeed, summary, dateTime,
 }) {
   return {
     type: 'SET_CACHED_DATA',
     payload: {
-      temperature, windSpeed, summary, dateTime,
+      city,
+      temperature,
+      windSpeed,
+      summary,
+      dateTime,
     },
-    city,
   };
 }
+
+const getTemperatureSelector = (state) => state.temperature;
+const getWindSpeedSelector = (state) => state.windSpeed;
+const getSummarySelector = (state) => state.summary;
+const getApiSelector = (state) => state.api;
+const getLngSelector = (state) => state.lng;
+const getLatSelector = (state) => state.lat;
+const getWeatherStateSelector = (state) => state.weatherState;
+const getLoadingSelector = (state) => state.loading;
+const getCitySelector = (state) => state.city;
+export function mapStateToProps(state) {
+  return {
+    temperature: getTemperatureSelector(state),
+    windSpeed: getWindSpeedSelector(state),
+    summary: getSummarySelector(state),
+    api: getApiSelector(state),
+    lng: getLngSelector(state),
+    lat: getLatSelector(state),
+    weatherState: getWeatherStateSelector(state),
+    loading: getLoadingSelector(state),
+    city: getCitySelector(state),
+  };
+}
+
+export const mapDispatchToProps = (dispatch) => ({
+  setCity: (value) => dispatch(setCity(value)),
+  setCurrentApi: (value) => dispatch(setCurrentApi(value)),
+  geocoderLoadingSuccess: (value) => dispatch(geocoderLoadingSuccess(value)),
+  geocoderLoadingFailure: () => dispatch(geocoderLoadingFailure()),
+  geocoderLoadingStarted: () => dispatch(geocoderLoadingStarted()),
+  weatherLoadingSuccess: (value) => dispatch(weatherLoadingSuccess(value)),
+  weatherLoadingStarted: () => dispatch(weatherLoadingStarted()),
+  weatherLoadingFailure: () => dispatch(weatherLoadingFailure()),
+  setСachedData: (value, weather) => dispatch(setСachedData(value, weather)),
+});
