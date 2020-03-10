@@ -3,7 +3,9 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { applyMiddleware, createStore } from 'redux';
 import { createLogger } from 'redux-logger';
+import PropTypes from 'prop-types';
 import reducer from './redusers';
+
 
 /* {import App from './App';
 import * as serviceWorker from './serviceWorker';} */
@@ -36,8 +38,7 @@ const logger = createLogger({ collapsed: true });
 export const store = createStore(reducer, applyMiddleware(logger));
 class WeatherApi extends React.Component {
   componentDidMount() {
-    const { setCurrentApi, setСachedData } = this.props;
-    setCurrentApi(DARKSKY);
+    const { setСachedData } = this.props;
     Object.keys(localStorage).forEach((value) => {
       setСachedData(value, {
         ...JSON.parse(localStorage.getItem(value)),
@@ -52,7 +53,7 @@ class WeatherApi extends React.Component {
   getClickHandler(key) {
     const { api } = this.props;
     const {
-      weatherState: { [key]: cachedWeather},
+      weatherState: { [key]: cachedWeather },
     } = this.props;
     const { weatherState: stateWeather } = this.props;
     if (Object.prototype.hasOwnProperty.call(stateWeather, key)) {
@@ -103,8 +104,8 @@ class WeatherApi extends React.Component {
     geocoderLoadingStarted();
     const { api } = this.props;
     geocoderLoadingSuccess({
-      lat: position.coords.latitude,
-      lng: position.coords.longitude,
+      lat: String(position.coords.latitude),
+      lng: String(position.coords.longitude),
     });
     if (api === DARKSKY) {
       this.getWeatherFromDarkSky();
@@ -113,12 +114,11 @@ class WeatherApi extends React.Component {
 
   errorHandler = (positionError) => {
     const { geocoderLoadingFailure } = this.props;
-    if (positionError.code === positionError.PERMISSION_DENIED) {
-      geocoderLoadingFailure();
-    } else if (positionError.code === positionError.POSITION_UNAVAILABLE) {
-      geocoderLoadingFailure();
-    } else if (positionError.code === positionError.TIMEOUT) {
-      geocoderLoadingFailure();
+    switch (positionError.code) {
+      case positionError.PERMISSION_DENIED: geocoderLoadingFailure(); break;
+      case positionError.POSITION_UNAVAILABLE: geocoderLoadingFailure(); break;
+      case positionError.TIMEOUT: geocoderLoadingFailure(); break;
+      default: break;
     }
   };
 
@@ -313,5 +313,45 @@ Wind Speed :
     );
   }
 }
+WeatherApi.propTypes = {
+  api: PropTypes.string,
+  city: PropTypes.string,
+  lat: PropTypes.string,
+  lng: PropTypes.string,
+  temperature: PropTypes.number,
+  windSpeed: PropTypes.number,
+  summary: PropTypes.string,
+  loading: PropTypes.bool,
+  setCity: PropTypes.func,
+  setCurrentApi: PropTypes.func,
+  setСachedData: PropTypes.func,
+  geocoderLoadingStarted: PropTypes.func,
+  geocoderLoadingSuccess: PropTypes.func,
+  geocoderLoadingFailure: PropTypes.func,
+  weatherLoadingStarted: PropTypes.func,
+  weatherLoadingSuccess: PropTypes.func,
+  weatherLoadingFailure: PropTypes.func,
+  weatherState: PropTypes.shape(),
+};
+WeatherApi.defaultProps = {
+  api: DARKSKY,
+  city: '',
+  lat: '',
+  lng: '',
+  temperature: null,
+  windSpeed: null,
+  summary: '',
+  loading: true,
+  setCity: () => {},
+  setCurrentApi: () => {},
+  setСachedData: () => {},
+  geocoderLoadingStarted: () => {},
+  geocoderLoadingSuccess: () => {},
+  geocoderLoadingFailure: () => {},
+  weatherLoadingStarted: () => {},
+  weatherLoadingSuccess: () => {},
+  weatherLoadingFailure: () => {},
+  weatherState: {},
+};
 
 export const Weather = connect(mapStateToProps, mapDispatchToProps)(WeatherApi);
