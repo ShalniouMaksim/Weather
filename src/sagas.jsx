@@ -1,4 +1,6 @@
-import { call, put, takeEvery } from 'redux-saga/effects';
+import {
+  call, put, takeEvery, select,
+} from 'redux-saga/effects';
 import {
   apiKey,
   urlCordinates,
@@ -13,7 +15,10 @@ import {
   geocoderLoadingStarted, geocoderLoadingSuccess, weatherLoadingStarted,
   weatherLoadingSuccess, weatherLoadingFailure, setWeather, setСachedData,
 } from './actions';
-import { getUserLocation, setToLocalStorage, getToLocalStorage } from './utils';
+import {
+  getUserLocation, setToLocalStorage,
+  getToLocalStorage, checkErrorFetch,
+} from './utils';
 
 const fetchWeatherDarkSky = function* fetchWeatherDarkSky(action) {
   yield put(weatherLoadingStarted());
@@ -142,17 +147,21 @@ const checkInputCity = function* checkInputCity(action) {
   } else {
     yield call(getCoordinates, { city: action.city, api: action.api });
   }
+  const errorWeather = yield select((state) => state.errorWeather);
+  const errorGeocoder = yield select((state) => state.errorGeocoder);
+  yield call(checkErrorFetch, errorWeather, errorGeocoder);
 };
 
-const getUserCoordinates = function* getUserCoordinates(action) {
+const getUserCoordinates = function* getUserCoordinates() {
   const localObject = yield call(getToLocalStorage);
   yield put(setWeatherCached(localObject));
   const location = yield call(getUserLocation);
   const { latitude: lat, longitude: lng } = location.coords;
   yield put(setGeocoder({ lat: String(lat), lng: String(lng) }));
-  if (action.api === DARKSKY) {
-    yield call(fetchWeatherDarkSky, { lat, lng, city: '' });
-  } else yield call(fetchWeatherStormglass, { lat, lng, city: '' });
+  yield call(fetchWeatherDarkSky, { lat, lng, city: '' });
+  const errorWeather = yield select((state) => state.errorWeather);
+  const errorGeocoder = yield select((state) => state.errorGeocoder);
+  yield call(checkErrorFetch, errorWeather, errorGeocoder);
 };
 export default function* watchMessages() {
   yield takeEvery('FETCH_WEATHER_FROM_DARKSKY', fetchWeatherDarkSky);

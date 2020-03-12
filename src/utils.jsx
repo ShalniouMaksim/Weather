@@ -24,3 +24,8 @@ export const getToLocalStorage = function getToLocalStorage() {
   });
   return localObject;
 };
+
+export const checkErrorFetch = function checkErrorFetch(errorWeather, errorGeocoder) {
+  if (errorWeather) alert('Ошибка погоды');
+  if (errorGeocoder) alert('Ошибка геокодера');
+};

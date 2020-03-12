@@ -4,18 +4,19 @@ export default function reducer(state = {}, action) {
       return {
         ...state,
         loadingWeather: true,
+        errorWeather: false,
       };
     case 'WEATHER_LOADING_FAILURE':
       return {
         ...state,
         loadingWeather: false,
-        weatherError: true,
+        errorWeather: true,
       };
     case 'WEATHER_LOADING_SUCCESS':
       return {
         ...state,
         loadingWeather: false,
-        weatherError: false,
+        errorWeather: false,
       };
     case 'SET_WEATHER':
       return {
@@ -51,6 +52,12 @@ export default function reducer(state = {}, action) {
       return {
         ...state,
         api: action.api,
+      };
+    case 'CHECK_INPUT_CITY':
+      return {
+        ...state,
+        errorGeocoder: false,
+        errorWeather: false,
       };
     case 'SET_CITY':
       return {

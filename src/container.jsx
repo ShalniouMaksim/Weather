@@ -21,6 +21,7 @@ function mapStateToProps(state) {
     loadingGeocoder: state.loadingGeocoder,
     city: state.city,
     errorGeocoder: state.errorGeocoder,
+    errorWeather: state.errorWeather,
   };
 }
 
