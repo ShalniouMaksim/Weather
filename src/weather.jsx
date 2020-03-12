@@ -21,7 +21,6 @@ import {
 } from './styled';
 import { GlobalStyle } from './globalstyles';
 
-
 export default class WeatherApi extends React.Component {
   componentDidMount() {
     const { getUserCoordinates } = this.props;

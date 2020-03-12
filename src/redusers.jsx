@@ -9,12 +9,13 @@ export default function reducer(state = {}, action) {
       return {
         ...state,
         loadingWeather: false,
+        weatherError: true,
       };
     case 'WEATHER_LOADING_SUCCESS':
       return {
         ...state,
         loadingWeather: false,
-
+        weatherError: false,
       };
     case 'SET_WEATHER':
       return {

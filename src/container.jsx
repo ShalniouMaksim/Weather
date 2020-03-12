@@ -8,51 +8,39 @@ import {
 } from './actions';
 import WeatherApi from './weather';
 
-const getTemperatureSelector = (state) => state.temperature;
-const getWindSpeedSelector = (state) => state.windSpeed;
-const getSummarySelector = (state) => state.summary;
-const getApiSelector = (state) => state.api;
-const getLngSelector = (state) => state.lng;
-const getLatSelector = (state) => state.lat;
-const getWeatherStateSelector = (state) => state.weatherState;
-const getLoadingWeatherSelector = (state) => state.loadingWeather;
-const getLoadingGeocoderSelector = (state) => state.loadingGeocoder;
-const getCitySelector = (state) => state.city;
-const getErrorGeocoder = (state) => state.errorGeocoder;
-
 function mapStateToProps(state) {
   return {
-    temperature: getTemperatureSelector(state),
-    windSpeed: getWindSpeedSelector(state),
-    summary: getSummarySelector(state),
-    api: getApiSelector(state),
-    lng: getLngSelector(state),
-    lat: getLatSelector(state),
-    weatherState: getWeatherStateSelector(state),
-    loadingWeather: getLoadingWeatherSelector(state),
-    loadingGeocoder: getLoadingGeocoderSelector(state),
-    city: getCitySelector(state),
-    errorGeocoder: getErrorGeocoder(state),
+    temperature: state.temperature,
+    windSpeed: state.windSpeed,
+    summary: state.summary,
+    api: state.api,
+    lng: state.lng,
+    lat: state.lat,
+    weatherState: state.weatherState,
+    loadingWeather: state.loadingWeather,
+    loadingGeocoder: state.loadingGeocoder,
+    city: state.city,
+    errorGeocoder: state.errorGeocoder,
   };
 }
 
 const mapDispatchToProps = (dispatch) => ({
-  setCity: (value) => dispatch(setCity(value)),
-  setCurrentApi: (value) => dispatch(setCurrentApi(value)),
+  setCity: (city) => dispatch(setCity(city)),
+  setCurrentApi: (api) => dispatch(setCurrentApi(api)),
   geocoderLoadingSuccess: () => dispatch(geocoderLoadingSuccess()),
-  setGeocoder: (value) => dispatch(setGeocoder(value)),
+  setGeocoder: (payload) => dispatch(setGeocoder(payload)),
   geocoderLoadingFailure: () => dispatch(geocoderLoadingFailure()),
   geocoderLoadingStarted: () => dispatch(geocoderLoadingStarted()),
   weatherLoadingSuccess: () => dispatch(weatherLoadingSuccess()),
-  setWeather: (value) => dispatch(setWeather(value)),
+  setWeather: (payload) => dispatch(setWeather(payload)),
   weatherLoadingStarted: () => dispatch(weatherLoadingStarted()),
   weatherLoadingFailure: () => dispatch(weatherLoadingFailure()),
-  setСachedData: (value, weather) => dispatch(setСachedData(value, weather)),
+  setСachedData: (payload) => dispatch(setСachedData(payload)),
   getUserCoordinates: () => dispatch(getUserCoordinates()),
-  getCoordinatesByName: (value) => dispatch(getCoordinatesByName(value)),
-  checkInputCity: (value) => dispatch(checkInputCity(value)),
-  fetchWeatherFromDarkSky: (value) => dispatch(fetchWeatherFromDarkSky(value)),
-  fetchWeatherFromStorm: (value) => dispatch(fetchWeatherFromStorm(value)),
+  getCoordinatesByName: (object) => dispatch(getCoordinatesByName(object)),
+  checkInputCity: (object) => dispatch(checkInputCity(object)),
+  fetchWeatherFromDarkSky: (object) => dispatch(fetchWeatherFromDarkSky(object)),
+  fetchWeatherFromStorm: (object) => dispatch(fetchWeatherFromStorm(object)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(WeatherApi);

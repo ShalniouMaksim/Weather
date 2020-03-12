@@ -13,6 +13,7 @@ import {
   geocoderLoadingStarted, geocoderLoadingSuccess, weatherLoadingStarted,
   weatherLoadingSuccess, weatherLoadingFailure, setWeather, setСachedData,
 } from './actions';
+import { getUserLocation, setToLocalStorage, getToLocalStorage } from './utils';
 
 const fetchWeatherDarkSky = function* fetchWeatherDarkSky(action) {
   yield put(weatherLoadingStarted());
@@ -21,7 +22,6 @@ const fetchWeatherDarkSky = function* fetchWeatherDarkSky(action) {
     if (response.ok) {
       const answer = yield response.json();
       yield put(weatherLoadingSuccess());
-      yield weatherLoadingSuccess();
       yield put(setWeather({
         summary: answer.currently.summary,
         windSpeed: Math.round(answer.currently.windSpeed),
@@ -34,13 +34,8 @@ const fetchWeatherDarkSky = function* fetchWeatherDarkSky(action) {
         summary: answer.currently.summary,
         dateTime: new Date(),
       }));
-
-      yield localStorage.setItem(action.city, JSON.stringify({
-        temperature: Math.round(answer.currently.temperature),
-        windSpeed: Math.round(answer.currently.windSpeed),
-        summary: answer.currently.summary,
-        dateTime: new Date(),
-      }));
+      yield call(setToLocalStorage(action.city, answer.currently.temperature,
+        answer.currently.windSpeed, answer.currently.summary));
     } else throw new Error(response.statusText);
   } catch (err) {
     weatherLoadingFailure();
@@ -82,7 +77,6 @@ const fetchWeatherStormglass = function* fetchWeatherStormglass(action) {
           summarryLet = 'Clear'; break;
       }
       yield put(weatherLoadingSuccess());
-      yield weatherLoadingSuccess();
       yield put(setWeather({
         summary: summarryLet,
         windSpeed: Math.round(json.hours[0].windSpeed[0].value),
@@ -95,13 +89,8 @@ const fetchWeatherStormglass = function* fetchWeatherStormglass(action) {
         summary: summarryLet,
         dateTime: new Date(),
       }));
-
-      yield localStorage.setItem(action.city, JSON.stringify({
-        temperature: Math.round(json.hours[0].airTemperature[0].value),
-        windSpeed: Math.round(json.hours[0].windSpeed[0].value),
-        summary: summarryLet,
-        dateTime: new Date(),
-      }));
+      yield call(setToLocalStorage(action.city, json.hours[0].airTemperature[0].value,
+        json.hours[0].windSpeed[0].value, summarryLet));
     } else throw new Error(response.statusText);
   } catch (err) {
     weatherLoadingFailure();
@@ -115,7 +104,6 @@ const getCoordinates = function* getCoordinates(action) {
   if (response.ok) {
     json = yield response.json();
     if (json.error) {
-      alert('Вы точно ввели корректный город ?');
       yield put(geocoderLoadingFailure());
     } else {
       yield put(geocoderLoadingSuccess());
@@ -124,8 +112,14 @@ const getCoordinates = function* getCoordinates(action) {
         lng: json.longt,
       }));
       if (action.api === DARKSKY) {
-        yield fetchWeatherDarkSky({ lat: json.latt, lng: json.longt, city: action.city });
-      } else yield fetchWeatherStormglass({ lat: json.latt, lng: json.longt, city: action.city });
+        yield call(fetchWeatherDarkSky, { lat: json.latt, lng: json.longt, city: action.city });
+      } else {
+        yield call(fetchWeatherStormglass, {
+          lat: json.latt,
+          lng: json.longt,
+          city: action.city,
+        });
+      }
     }
   } else {
     yield put(geocoderLoadingFailure());
@@ -143,34 +137,22 @@ const checkInputCity = function* checkInputCity(action) {
         windSpeed: action.cachedWeather.windSpeed,
       }));
     } else {
-      yield getCoordinates(({ city: action.city, api: action.api }));
+      yield call(getCoordinates, { city: action.city, api: action.api });
     }
   } else {
-    yield getCoordinates({ city: action.city, api: action.api });
+    yield call(getCoordinates, { city: action.city, api: action.api });
   }
 };
-const getUserLocation = () => new Promise((resolve, reject) => {
-  navigator.geolocation.getCurrentPosition(
-    (location) => resolve(location),
-    (error) => reject(error),
-  );
-});
 
 const getUserCoordinates = function* getUserCoordinates(action) {
-  let localObject = {};
-  yield Object.keys(localStorage).forEach((value) => {
-    localObject = {
-      ...localObject,
-      [value]: JSON.parse(localStorage.getItem(value)),
-    };
-  });
+  const localObject = yield call(getToLocalStorage);
   yield put(setWeatherCached(localObject));
   const location = yield call(getUserLocation);
   const { latitude: lat, longitude: lng } = location.coords;
   yield put(setGeocoder({ lat: String(lat), lng: String(lng) }));
   if (action.api === DARKSKY) {
-    yield fetchWeatherDarkSky({ lat, lng, city: '' });
-  } else yield fetchWeatherStormglass({ lat, lng, city: '' });
+    yield call(fetchWeatherDarkSky, { lat, lng, city: '' });
+  } else yield call(fetchWeatherStormglass, { lat, lng, city: '' });
 };
 export default function* watchMessages() {
   yield takeEvery('FETCH_WEATHER_FROM_DARKSKY', fetchWeatherDarkSky);
