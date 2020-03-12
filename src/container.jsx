@@ -4,7 +4,7 @@ import {
   getUserCoordinates, getCoordinatesByName, fetchWeatherFromDarkSky,
   geocoderLoadingStarted, geocoderLoadingSuccess, weatherLoadingStarted, checkInputCity,
   weatherLoadingSuccess, weatherLoadingFailure, setWeather, setСachedData,
-  fetchWeatherFromStorm,
+  fetchWeatherFromStorm, dropErrorsState,
 } from './actions';
 import WeatherApi from './weather';
 
@@ -42,6 +42,7 @@ const mapDispatchToProps = (dispatch) => ({
   checkInputCity: (object) => dispatch(checkInputCity(object)),
   fetchWeatherFromDarkSky: (object) => dispatch(fetchWeatherFromDarkSky(object)),
   fetchWeatherFromStorm: (object) => dispatch(fetchWeatherFromStorm(object)),
+  dropErrorsState: () => dispatch(dropErrorsState()),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(WeatherApi);

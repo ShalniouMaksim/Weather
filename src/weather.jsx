@@ -27,6 +27,13 @@ export default class WeatherApi extends React.Component {
     getUserCoordinates();
   }
 
+  componentDidUpdate() {
+    const { errorGeocoder, errorWeather, dropErrorsState } = this.props;
+    if (errorWeather) alert('Ошибка погоды');
+    if (errorGeocoder) alert('Ошибка геокодера');
+    if (errorWeather || errorGeocoder) dropErrorsState();
+  }
+
   getCordinatesByCityName = () => {
     const {
       city, api, getCoordinatesByName,
@@ -130,13 +137,16 @@ WeatherApi.propTypes = {
   summary: PropTypes.string,
   loadingWeather: PropTypes.bool,
   loadingGeocoder: PropTypes.bool,
-  fetchWeatherFromDarkSky: PropTypes.func,
-  fetchWeatherFromStorm: PropTypes.func,
-  checkInputCity: PropTypes.func,
-  getCoordinatesByName: PropTypes.func,
-  getUserCoordinates: PropTypes.func,
-  setCity: PropTypes.func,
-  setCurrentApi: PropTypes.func,
+  errorWeather: PropTypes.bool,
+  errorGeocoder: PropTypes.bool,
+  dropErrorsState: PropTypes.func.isRequired,
+  fetchWeatherFromDarkSky: PropTypes.func.isRequired,
+  fetchWeatherFromStorm: PropTypes.func.isRequired,
+  checkInputCity: PropTypes.func.isRequired,
+  getCoordinatesByName: PropTypes.func.isRequired,
+  getUserCoordinates: PropTypes.func.isRequired,
+  setCity: PropTypes.func.isRequired,
+  setCurrentApi: PropTypes.func.isRequired,
   weatherState: PropTypes.objectOf(PropTypes.shape()),
 };
 WeatherApi.defaultProps = {
@@ -144,17 +154,12 @@ WeatherApi.defaultProps = {
   city: '',
   lat: '',
   lng: '',
+  errorWeather: false,
+  errorGeocoder: false,
   temperature: null,
   windSpeed: null,
   summary: '',
   loadingWeather: true,
   loadingGeocoder: true,
-  fetchWeatherFromDarkSky: () => {},
-  fetchWeatherFromStorm: () => {},
-  checkInputCity: () => {},
-  getCoordinatesByName: () => {},
-  getUserCoordinates: () => {},
-  setCity: () => {},
-  setCurrentApi: () => {},
   weatherState: {},
 };

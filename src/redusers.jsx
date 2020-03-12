@@ -16,7 +16,6 @@ export default function reducer(state = {}, action) {
       return {
         ...state,
         loadingWeather: false,
-        errorWeather: false,
       };
     case 'SET_WEATHER':
       return {
@@ -24,6 +23,12 @@ export default function reducer(state = {}, action) {
         temperature: action.payload.temperature,
         windSpeed: action.payload.windSpeed,
         summary: action.payload.summary,
+      };
+    case 'DROP_ERRORS_STATE':
+      return {
+        ...state,
+        errorWeather: false,
+        errorGeocoder: false,
       };
     case 'GEOCODER_LOADING_STARTED':
       return {
@@ -40,7 +45,6 @@ export default function reducer(state = {}, action) {
       return {
         ...state,
         loadingGeocoder: false,
-        errorGeocoder: false,
       };
     case 'SET_GEOCODER':
       return {

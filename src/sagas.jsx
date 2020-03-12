@@ -1,5 +1,5 @@
 import {
-  call, put, takeEvery, select,
+  call, put, takeEvery,
 } from 'redux-saga/effects';
 import {
   apiKey,
@@ -17,7 +17,7 @@ import {
 } from './actions';
 import {
   getUserLocation, setToLocalStorage,
-  getToLocalStorage, checkErrorFetch,
+  getToLocalStorage,
 } from './utils';
 
 const fetchWeatherDarkSky = function* fetchWeatherDarkSky(action) {
@@ -147,9 +147,6 @@ const checkInputCity = function* checkInputCity(action) {
   } else {
     yield call(getCoordinates, { city: action.city, api: action.api });
   }
-  const errorWeather = yield select((state) => state.errorWeather);
-  const errorGeocoder = yield select((state) => state.errorGeocoder);
-  yield call(checkErrorFetch, errorWeather, errorGeocoder);
 };
 
 const getUserCoordinates = function* getUserCoordinates() {
@@ -159,9 +156,6 @@ const getUserCoordinates = function* getUserCoordinates() {
   const { latitude: lat, longitude: lng } = location.coords;
   yield put(setGeocoder({ lat: String(lat), lng: String(lng) }));
   yield call(fetchWeatherDarkSky, { lat, lng, city: '' });
-  const errorWeather = yield select((state) => state.errorWeather);
-  const errorGeocoder = yield select((state) => state.errorGeocoder);
-  yield call(checkErrorFetch, errorWeather, errorGeocoder);
 };
 export default function* watchMessages() {
   yield takeEvery('FETCH_WEATHER_FROM_DARKSKY', fetchWeatherDarkSky);

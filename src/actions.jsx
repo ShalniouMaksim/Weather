@@ -108,6 +108,12 @@ export function fetchWeatherFromStorm({ lat, lng, city }) {
   };
 }
 
+export function dropErrorsState() {
+  return {
+    type: 'DROP_ERRORS_STATE',
+  };
+}
+
 export function setСachedData({
   city,
   temperature,
