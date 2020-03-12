@@ -3,17 +3,22 @@ export default function reducer(state = {}, action) {
     case 'WEATHER_LOADING_STARTED':
       return {
         ...state,
-        loading: true,
+        loadingWeather: true,
       };
     case 'WEATHER_LOADING_FAILURE':
       return {
         ...state,
-        loading: false,
+        loadingWeather: false,
       };
     case 'WEATHER_LOADING_SUCCESS':
       return {
         ...state,
-        loading: false,
+        loadingWeather: false,
+
+      };
+    case 'SET_WEATHER':
+      return {
+        ...state,
         temperature: action.payload.temperature,
         windSpeed: action.payload.windSpeed,
         summary: action.payload.summary,
@@ -21,17 +26,23 @@ export default function reducer(state = {}, action) {
     case 'GEOCODER_LOADING_STARTED':
       return {
         ...state,
-        loading: true,
+        loadingGeocoder: true,
       };
     case 'GEOCODER_LOADING_FAILURE':
       return {
         ...state,
-        loading: false,
+        loadingGeocoder: false,
+        errorGeocoder: true,
       };
     case 'GEOCODER_LOADING_SUCCESS':
       return {
         ...state,
-        loading: true,
+        loadingGeocoder: false,
+        errorGeocoder: false,
+      };
+    case 'SET_GEOCODER':
+      return {
+        ...state,
         lng: action.payload.lng,
         lat: action.payload.lat,
       };
@@ -45,10 +56,16 @@ export default function reducer(state = {}, action) {
         ...state,
         city: action.city,
       };
+    case 'SET_WEATHER_CACHED':
+      return {
+        ...state,
+        weatherState: action.weather,
+      };
     case 'SET_CACHED_DATA':
       return {
         ...state,
-        loading: false,
+        loadingWeather: false,
+        loadingGeocoder: false,
         weatherState: {
           ...state.weatherState,
           [action.payload.city]: {

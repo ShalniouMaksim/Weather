@@ -1,27 +1,14 @@
 
 import React from 'react';
-import { connect } from 'react-redux';
-import { applyMiddleware, createStore } from 'redux';
-import { createLogger } from 'redux-logger';
 import PropTypes from 'prop-types';
-import reducer from './redusers';
 
 
 /* {import App from './App';
 import * as serviceWorker from './serviceWorker';} */
 import {
-  apiKey,
-  urlCordinates,
-  proxyUrl,
-  urlDark,
-  apiKeyDark,
-  urlStorm,
   DARKSKY,
 } from './constants';
-import {
-  mapDispatchToProps,
-  mapStateToProps,
-} from './actions';
+
 import {
   Select,
   BorderItem,
@@ -34,237 +21,58 @@ import {
 } from './styled';
 import { GlobalStyle } from './globalstyles';
 
-const logger = createLogger({ collapsed: true });
-export const store = createStore(reducer, applyMiddleware(logger));
-class WeatherApi extends React.Component {
+
+export default class WeatherApi extends React.Component {
   componentDidMount() {
-    const { setСachedData } = this.props;
-    Object.keys(localStorage).forEach((value) => {
-      setСachedData(value, {
-        ...JSON.parse(localStorage.getItem(value)),
-      });
-    });
-    navigator.geolocation.getCurrentPosition(
-      this.successHandler,
-      this.errorHandler,
-    );
+    const { getUserCoordinates } = this.props;
+    getUserCoordinates();
   }
 
-  getClickHandler(key) {
-    const { api } = this.props;
+  getCordinatesByCityName = () => {
     const {
-      weatherState: { [key]: cachedWeather },
+      city, api, getCoordinatesByName,
     } = this.props;
-    const { weatherState: stateWeather } = this.props;
-    if (Object.prototype.hasOwnProperty.call(stateWeather, key)) {
-      const dateNow = new Date();
-      const dateTime = new Date(cachedWeather.dateTime);
-      dateTime.setMilliseconds(2 * 60 * 60 * 1000);
-      if (dateTime.getTime() > dateNow.getTime()) {
-        return cachedWeather;
-      }
-      if (api === DARKSKY) {
-        this.getWeatherFromDarkSky();
-      } else this.getWeatherFromStormglass();
-    } else if (api === DARKSKY) {
-      this.getWeatherFromDarkSky();
-    } else this.getWeatherFromStormglass();
-    return cachedWeather;
-  }
-
-  getCordinatesByCityName = async () => {
-    const {
-      geocoderLoadingStarted,
-      geocoderLoadingSuccess,
-      geocoderLoadingFailure,
-    } = this.props;
-    geocoderLoadingStarted();
-    const { city } = this.props;
-    let json;
-    const response = await fetch(
-      `${proxyUrl}${urlCordinates}${city}?json=1`,
-    );
-    if (response.ok) {
-      json = await response.json();
-      geocoderLoadingSuccess({
-        lat: json.latt,
-        lng: json.longt,
-      });
-      if (json.error) alert('Вы точно ввели корректный город ?');
-    } else {
-      geocoderLoadingFailure();
-    }
-  };
-
-  successHandler = (position) => {
-    const {
-      geocoderLoadingStarted,
-      geocoderLoadingSuccess,
-    } = this.props;
-    geocoderLoadingStarted();
-    const { api } = this.props;
-    geocoderLoadingSuccess({
-      lat: String(position.coords.latitude),
-      lng: String(position.coords.longitude),
-    });
-    if (api === DARKSKY) {
-      this.getWeatherFromDarkSky();
-    } else this.getWeatherFromStormglass();
-  };
-
-  errorHandler = (positionError) => {
-    const { geocoderLoadingFailure } = this.props;
-    switch (positionError.code) {
-      case positionError.PERMISSION_DENIED: geocoderLoadingFailure(); break;
-      case positionError.POSITION_UNAVAILABLE: geocoderLoadingFailure(); break;
-      case positionError.TIMEOUT: geocoderLoadingFailure(); break;
-      default: break;
-    }
+    getCoordinatesByName({ city, api });
   };
 
   checkInputValue = (event) => {
     const { setCity } = this.props;
-    event.preventDefault();
     setCity(event.target.value);
   };
 
-  checkInputCityValue = async (event) => {
-    const { weatherLoadingSuccess } = this.props;
-    const { city } = this.props;
-    event.preventDefault();
-    if (city === '') {
-      navigator.geolocation.getCurrentPosition(
-        this.successHandler,
-        this.errorHandler,
-      );
-    } else {
-      await this.getCordinatesByCityName();
-    }
-    if (await this.getClickHandler(city)) {
-      const {
-        weatherState: { [city]: cachedWeather },
-      } = this.props;
-      weatherLoadingSuccess({
-        temperature: cachedWeather.temperature,
-        summary: cachedWeather.summary,
-        windSpeed: cachedWeather.windSpeed,
-      });
-    }
-  };
+  checkInputCityValue = () => {
+    const {
+      checkInputCity,
+      weatherState: stateWeather,
+      api, city, weatherState: { [city]: cachedWeather },
+    } = this.props;
+    checkInputCity({
+      api, city, cachedWeather, stateWeather,
+    });
+  }
 
-  checkSelect = async (event) => {
+  checkSelect = (event) => {
     const { setCurrentApi } = this.props;
-    event.preventDefault();
     setCurrentApi(event.target.value);
   };
 
-  getWeatherFromDarkSky = async () => {
+  getWeatherFromDarkSky = () => {
     const {
-      weatherLoadingStarted,
-      weatherLoadingSuccess,
-      weatherLoadingFailure,
-      setСachedData,
+      city, lat, lng, fetchWeatherFromDarkSky,
     } = this.props;
-    weatherLoadingStarted();
-    const { city, lat, lng } = this.props;
-    let response;
-    try {
-      response = await fetch(
-        `${proxyUrl}${urlDark}${apiKeyDark}${lat},${lng}?units=si`,
-      );
-      if (response.ok) {
-        const answer = await response.json();
-        weatherLoadingSuccess({
-          summary: answer.currently.summary,
-          windSpeed: Math.round(answer.currently.windSpeed),
-          temperature: Math.round(answer.currently.temperature),
-        });
-        setСachedData(city, {
-          temperature: Math.round(answer.currently.temperature),
-          windSpeed: Math.round(answer.currently.windSpeed),
-          summary: answer.currently.summary,
-          dateTime: new Date(),
-        });
-        const {
-          weatherState: { [city]: cachedWeather },
-        } = this.props;
-        localStorage.setItem(city, JSON.stringify(cachedWeather));
-      } else throw new Error(response.statusText);
-    } catch (err) {
-      weatherLoadingFailure();
-    }
+    fetchWeatherFromDarkSky({ lat, lng, city });
   };
 
-  getWeatherFromStormglass = async () => {
+  getWeatherFromStormglass = () => {
     const {
-      weatherLoadingStarted,
-      weatherLoadingSuccess,
-      weatherLoadingFailure,
-      setСachedData,
+      city, lat, lng, fetchWeatherFromStorm,
     } = this.props;
-    weatherLoadingStarted();
-    const {
-      city, summary, lat, lng,
-    } = this.props;
-    const date = new Date();
-    const a = date.toISOString();
-    let response;
-    try {
-      response = await fetch(
-        `${proxyUrl}${urlStorm}lat=${lat}&lng=${lng}&start=${a}&end=${a}`,
-        {
-          headers: {
-            Authorization: apiKey,
-          },
-        },
-      );
-      if (response.ok) {
-        const json = await response.json();
-        let summarryLet;
-        switch (true) {
-          case (json.hours[0].precipitation[0].value > 1.1
-           && json.hours[0].airTemperature[0].value > 0):
-            summarryLet = 'Heavy rain'; break;
-          case (json.hours[0].precipitation[0].value > 0
-           && json.hours[0].precipitation[0].value <= 1.1
-          && json.hours[0].airTemperature[0].value > 0):
-            summarryLet = 'Light Rain'; break;
-          case (json.hours[0].precipitation[0].value > 0.8
-           && json.hours[0].airTemperature[0].value < 0):
-            summarryLet = 'Heavy snow'; break;
-          case (json.hours[0].precipitation[0].value > 0
-           && json.hours[0].precipitation[0].value <= 0.8
-          && json.hours[0].airTemperature[0].value < 0):
-            summarryLet = 'Light snow'; break;
-          case (json.hours[0].cloudCover[0].value > 80):
-            summarryLet = 'cloudy'; break;
-          default:
-            summarryLet = 'Clear'; break;
-        }
-        weatherLoadingSuccess({
-          summary: summarryLet,
-          windSpeed: Math.round(json.hours[0].windSpeed[0].value),
-          temperature: Math.round(json.hours[0].airTemperature[0].value),
-        });
-        setСachedData(city, {
-          temperature: Math.round(json.hours[0].airTemperature[0].value),
-          windSpeed: Math.round(json.hours[0].windSpeed[0].value),
-          summary,
-          dateTime: new Date(),
-        });
-        const {
-          weatherState: { [city]: cachedWeather },
-        } = this.props;
-        localStorage.setItem(city, JSON.stringify(cachedWeather));
-      } else throw new Error(response.statusText);
-    } catch (err) {
-      weatherLoadingFailure();
-    }
+    fetchWeatherFromStorm({ lat, lng, city });
   };
 
   render() {
     const {
-      temperature, windSpeed, summary, loading,
+      temperature, windSpeed, summary, loadingWeather, loadingGeocoder,
     } = this.props;
     return (
       <Container>
@@ -282,10 +90,10 @@ class WeatherApi extends React.Component {
               </div>
               <div>
                 <Button
-                  active={loading}
+                  active={(loadingWeather || loadingGeocoder)}
                   type="button"
                   onClick={this.checkInputCityValue}
-                  disabled={loading}
+                  disabled={(loadingWeather || loadingGeocoder)}
                 >
                   Weather
                 </Button>
@@ -297,7 +105,7 @@ class WeatherApi extends React.Component {
             </div>
             <div>
               <p>
-temperature :
+Temperature :
                 {temperature}
               </p>
               <p>
@@ -321,17 +129,16 @@ WeatherApi.propTypes = {
   temperature: PropTypes.number,
   windSpeed: PropTypes.number,
   summary: PropTypes.string,
-  loading: PropTypes.bool,
+  loadingWeather: PropTypes.bool,
+  loadingGeocoder: PropTypes.bool,
+  fetchWeatherFromDarkSky: PropTypes.func,
+  fetchWeatherFromStorm: PropTypes.func,
+  checkInputCity: PropTypes.func,
+  getCoordinatesByName: PropTypes.func,
+  getUserCoordinates: PropTypes.func,
   setCity: PropTypes.func,
   setCurrentApi: PropTypes.func,
-  setСachedData: PropTypes.func,
-  geocoderLoadingStarted: PropTypes.func,
-  geocoderLoadingSuccess: PropTypes.func,
-  geocoderLoadingFailure: PropTypes.func,
-  weatherLoadingStarted: PropTypes.func,
-  weatherLoadingSuccess: PropTypes.func,
-  weatherLoadingFailure: PropTypes.func,
-  weatherState: PropTypes.shape(),
+  weatherState: PropTypes.objectOf(PropTypes.shape()),
 };
 WeatherApi.defaultProps = {
   api: DARKSKY,
@@ -341,17 +148,14 @@ WeatherApi.defaultProps = {
   temperature: null,
   windSpeed: null,
   summary: '',
-  loading: true,
+  loadingWeather: true,
+  loadingGeocoder: true,
+  fetchWeatherFromDarkSky: () => {},
+  fetchWeatherFromStorm: () => {},
+  checkInputCity: () => {},
+  getCoordinatesByName: () => {},
+  getUserCoordinates: () => {},
   setCity: () => {},
   setCurrentApi: () => {},
-  setСachedData: () => {},
-  geocoderLoadingStarted: () => {},
-  geocoderLoadingSuccess: () => {},
-  geocoderLoadingFailure: () => {},
-  weatherLoadingStarted: () => {},
-  weatherLoadingSuccess: () => {},
-  weatherLoadingFailure: () => {},
   weatherState: {},
 };
-
-export const Weather = connect(mapStateToProps, mapDispatchToProps)(WeatherApi);

@@ -1,57 +1,119 @@
-function weatherLoadingSuccess({ temperature, windSpeed, summary }) {
+export function weatherLoadingSuccess() {
   return {
     type: 'WEATHER_LOADING_SUCCESS',
+  };
+}
+
+export function setWeather({ temperature, windSpeed, summary }) {
+  return {
+    type: 'SET_WEATHER',
     payload: { temperature, windSpeed, summary },
   };
 }
 
-function weatherLoadingFailure() {
+export function weatherLoadingFailure() {
   return {
     type: 'WEATHER_LOADING_FAILURE',
   };
 }
 
-function weatherLoadingStarted() {
+export function setWeatherCached(weather) {
+  return {
+    type: 'SET_WEATHER_CACHED',
+    weather,
+  };
+}
+
+export function weatherLoadingStarted() {
   return {
     type: 'WEATHER_LOADING_STARTED',
   };
 }
 
-function geocoderLoadingSuccess({ lng, lat }) {
+export function geocoderLoadingSuccess() {
   return {
     type: 'GEOCODER_LOADING_SUCCESS',
+  };
+}
+export function setGeocoder({ lng, lat }) {
+  return {
+    type: 'SET_GEOCODER',
     payload: { lng, lat },
   };
 }
 
-function geocoderLoadingFailure() {
+export function getCoordinatesByName({ city, api }) {
+  return {
+    type: 'GET_CORDINATES_BY_CITY_NAME',
+    city,
+    api,
+  };
+}
+export function getUserCoordinates() {
+  return {
+    type: 'GET_USER_COORDINATES',
+  };
+}
+
+export function geocoderLoadingFailure() {
   return {
     type: 'GEOCODER_LOADING_FAILURE',
   };
 }
 
-function geocoderLoadingStarted() {
+export function geocoderLoadingStarted() {
   return {
     type: 'GEOCODER_LOADING_STARTED',
   };
 }
 
-function setCurrentApi(api) {
+export function setCurrentApi(api) {
   return {
     type: 'SET_CURRENT_API',
     api,
   };
 }
 
-function setCity(city) {
+export function setCity(city) {
   return {
     type: 'SET_CITY',
     city,
   };
 }
+export function checkInputCity({
+  api, city, cachedWeather, stateWeather,
+}) {
+  return {
+    type: 'CHECK_INPUT_CITY',
+    api,
+    city,
+    cachedWeather,
+    stateWeather,
+  };
+}
+export function fetchWeatherFromDarkSky({ lat, lng, city }) {
+  return {
+    type: 'FETCH_WEATHER_FROM_DARKSKY',
+    lat,
+    lng,
+    city,
+  };
+}
+export function fetchWeatherFromStorm({ lat, lng, city }) {
+  return {
+    type: 'FETCH_WEATHER_FROM_SHTORM',
+    lat,
+    lng,
+    city,
+  };
+}
 
-function setСachedData(city, {
-  temperature, windSpeed, summary, dateTime,
+export function setСachedData({
+  city,
+  temperature,
+  windSpeed,
+  summary,
+  dateTime,
 }) {
   return {
     type: 'SET_CACHED_DATA',
@@ -64,38 +126,3 @@ function setСachedData(city, {
     },
   };
 }
-
-const getTemperatureSelector = (state) => state.temperature;
-const getWindSpeedSelector = (state) => state.windSpeed;
-const getSummarySelector = (state) => state.summary;
-const getApiSelector = (state) => state.api;
-const getLngSelector = (state) => state.lng;
-const getLatSelector = (state) => state.lat;
-const getWeatherStateSelector = (state) => state.weatherState;
-const getLoadingSelector = (state) => state.loading;
-const getCitySelector = (state) => state.city;
-export function mapStateToProps(state) {
-  return {
-    temperature: getTemperatureSelector(state),
-    windSpeed: getWindSpeedSelector(state),
-    summary: getSummarySelector(state),
-    api: getApiSelector(state),
-    lng: getLngSelector(state),
-    lat: getLatSelector(state),
-    weatherState: getWeatherStateSelector(state),
-    loading: getLoadingSelector(state),
-    city: getCitySelector(state),
-  };
-}
-
-export const mapDispatchToProps = (dispatch) => ({
-  setCity: (value) => dispatch(setCity(value)),
-  setCurrentApi: (value) => dispatch(setCurrentApi(value)),
-  geocoderLoadingSuccess: (value) => dispatch(geocoderLoadingSuccess(value)),
-  geocoderLoadingFailure: () => dispatch(geocoderLoadingFailure()),
-  geocoderLoadingStarted: () => dispatch(geocoderLoadingStarted()),
-  weatherLoadingSuccess: (value) => dispatch(weatherLoadingSuccess(value)),
-  weatherLoadingStarted: () => dispatch(weatherLoadingStarted()),
-  weatherLoadingFailure: () => dispatch(weatherLoadingFailure()),
-  setСachedData: (value, weather) => dispatch(setСachedData(value, weather)),
-});
